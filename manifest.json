@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+  "name": "微信公众号内容摘取器",
+  "version": "1.0",
+  "description": "帮助摘取和编辑微信公众号的图文内容",
+  "permissions": [
+    "activeTab"
+  ],
+  "browser_action": {
+    "default_title": "打开内容摘取器"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.weixin.qq.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ]
+}
