@@ -76,7 +76,7 @@
 
 ## Changelog
 
-### 2023-05-XX（请替换为实际日期）
+### 2024-10-21
 
 #### 新增功能
 1. 实现了精简 HTML 功能，可以移除不必要的属性（如 powered-by, label, copyright, cr 和所有 data- 属性）。
