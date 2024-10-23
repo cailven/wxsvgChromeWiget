@@ -20,115 +20,20 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
 });
 
+function loadCSS(url) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.type = 'text/css';
+  link.href = chrome.runtime.getURL(url);
+  document.head.appendChild(link);
+}
+
 function createEditor() {
+  loadCSS('styles.css');
+  
   editor = document.createElement('div');
   editor.id = 'wechat-content-editor';
   editor.innerHTML = `
-    <style>
-      #wechat-content-editor {
-        background-color: #2f3241;
-        color: #ffffff;
-        display: flex;
-        flex-direction: column;
-        height: 90vh;
-        max-height: 900px;
-      }
-      #tree-view {
-        flex: 1;
-        height: 33vh;
-        overflow: auto;
-        border: 1px solid #4a4d5e;
-        margin-bottom: 10px;
-        padding: 10px;
-        background-color: #383c4a;
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-      }
-      #attributes-panel {
-        height: 15vh;
-        overflow-y: auto;
-        background-color: #2f3241;
-        border: 1px solid #4a4d5e;
-        padding: 10px;
-        border-radius: 5px;
-      }
-      #style-attributes, #other-attributes {
-        margin-bottom: 10px;
-        background-color: #383c4a;
-        padding: 5px;
-        border-radius: 5px;
-      }
-      .attribute-title {
-        font-weight: bold;
-        margin-bottom: 5px;
-        color: #5294e2;
-        border-bottom: 1px solid #5294e2;
-        padding-bottom: 3px;
-        font-size: 12px;
-      }
-      .attribute-content {
-        font-family: monospace;
-        word-break: break-all;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 3px;
-        font-size: 11px;
-      }
-      .attribute-item {
-        background-color: #2f3241;
-        padding: 1px 3px;
-        border-radius: 2px;
-        display: inline-block;
-      }
-      .attribute-name {
-        color: #5294e2;
-        font-weight: bold;
-      }
-      .attribute-value {
-        color: #e6e6e6;
-      }
-      #content-area {
-        height: 35vh;
-        resize: vertical;
-        margin-bottom: 10px;
-        background-color: #383c4a;
-        color: #ffffff;
-        border: 1px solid #4a4d5e;
-  
-        font-family: monospace;
-        font-size: 12px;
-      }
-      .button-container {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 10px;
-      }
-      button, label {
-        background-color: #5294e2;
-        color: #ffffff;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 3px;
-        cursor: pointer;
-        font-size: 12px;
-      }
-      button:hover, label:hover {
-        background-color: #3a76c3;
-      }
-      .thumbnail {
-        max-width: 50px;
-        max-height: 50px;
-        margin-left: 5px;
-        vertical-align: middle;
-        cursor: pointer;
-      }
-      .preview img {
-        max-width: 300px;
-        max-height: 300px;
-        border: 2px solid #fff;
-        box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      }
-    </style>
     <div id="tree-view"></div>
     <div id="attributes-panel">
       <div id="style-attributes">
@@ -139,15 +44,21 @@ function createEditor() {
         <div class="attribute-title">其他属性</div>
         <div class="attribute-content"></div>
       </div>
+      <div id="animation-attributes" style="display: none;">
+        <div class="attribute-title">动画属性</div>
+        <div class="attribute-content"></div>
+      </div>
     </div>
-    <textarea id="content-area"></textarea>
+    <div id="content-area-container">
+      <textarea id="content-area"></textarea>
+    </div>
     <div class="button-container">
-      <label>
+      <label id="simplify-html-label">
         <input type="checkbox" id="simplify-html-checkbox" checked>
         精简 HTML
       </label>
-      <button id="extract-btn">提取全部内容</button>
-      <button id="extract-selected-btn">提取选中内容</button>
+       <button id="extract-btn">提取全部内容</button>
+       <button id="extract-selected-btn">提取选中内容</button>
       <button id="clear-selected-btn">清除选中</button>
       <button id="save-btn">保存</button>
       <button id="close-btn">关闭</button>
@@ -171,7 +82,7 @@ function createEditor() {
   
   document.getElementById('extract-btn').addEventListener('click', startContentExtraction);
   document.getElementById('extract-selected-btn').addEventListener('click', extractSelectedElements);
-  document.getElementById('clear-selected-btn').addEventListener('click', clearSelectedElements);
+  document.getElementById('clear-selected-btn').addEventListener('click', clearSelectedElementsBtnFunction);
   document.getElementById('save-btn').addEventListener('click', saveContent);
   document.getElementById('close-btn').addEventListener('click', removeEditor);
   
@@ -186,6 +97,7 @@ function createEditor() {
   });
   
   console.log('编辑器已创建');
+  startContentExtraction();
 }
 
 function toggleSelectMode() {
@@ -270,6 +182,12 @@ function updateTreeViewSelection(element) {
   }
 }
 
+function clearSelectedElementsBtnFunction(){
+  // 重新提取内容 
+  startContentExtraction();
+  startContentExtraction();
+}
+
 function clearSelectedElements() {
   selectedElements.forEach(element => {
     const overlay = document.getElementById(element.dataset.overlayId);
@@ -281,6 +199,7 @@ function clearSelectedElements() {
   for (let node of treeNodes) {
     node.style.backgroundColor = '';
   }
+  
 }
 
 function extractSelectedElements() {
@@ -319,12 +238,12 @@ function analyzePage() {
   // 列出所有 id 包含 content 的元素
   const contentIds = Array.from(document.querySelectorAll('[id*="content"]'))
     .map(el => el.id);
-  analysis += `ID 包含 "content" 的元素: ${contentIds.join(', ')}\n`;
+  analysis += `ID 包含 "content" 的元��: ${contentIds.join(', ')}\n`;
   
   // 列出所有 class 包含 content 的元素
   const contentClasses = Array.from(document.querySelectorAll('[class*="content"]'))
     .map(el => el.className);
-  analysis += `Class 包含 "content" 的元素: ${contentClasses.join(', ')}\n`;
+  analysis += `Class 包 "content" 的元素: ${contentClasses.join(', ')}\n`;
   
   contentArea.value = analysis;
   console.log(analysis);
@@ -364,7 +283,7 @@ function extractContent(element) {
   console.log('原始内容长度:', originalHTML.length);
 
   // 处理背景图片
-  const elementsWithBackgroundImage = element.querySelectorAll('[style*="background-image"]');
+  const elementsWithBackgroundImage = element.querySelectorAll('[style*="background-image"], [data-lazy-bgimg]');
   console.log(`找到的背景图片元素数量: ${elementsWithBackgroundImage.length}`);
 
   elementsWithBackgroundImage.forEach((el, index) => {
@@ -376,6 +295,39 @@ function extractContent(element) {
       el.removeAttribute('data-lazy-bgimg');
     } else {
       console.log('没有找到 data-lazy-bgimg，保留原始背景图片');
+    }
+  });
+
+  // 处理 <img> 标签
+  const imgElements = element.querySelectorAll('img[data-src]');
+  console.log(`找到的延迟加载 img 元素数量: ${imgElements.length}`);
+
+  imgElements.forEach((img, index) => {
+    console.log(`处理第 ${index + 1} 个 img 元素:`);
+    const dataSrc = img.getAttribute('data-src');
+    if (dataSrc) {
+      console.log('找到 data-src:', dataSrc);
+      img.src = dataSrc;
+      img.removeAttribute('data-src');
+      
+      // 移除占位符 SVG
+      if (img.src.startsWith('data:image/svg+xml')) {
+        img.src = dataSrc;
+      }
+      
+      // 处理其他可能的延迟加载属性
+      ['data-ratio', 'data-w', 'data-type', 'data-s'].forEach(attr => {
+        img.removeAttribute(attr);
+      });
+      
+      // 恢复原始样式
+      const originalStyle = img.getAttribute('data-original-style');
+      if (originalStyle) {
+        img.style = originalStyle;
+        img.removeAttribute('data-original-style');
+      }
+    } else {
+      console.log('没有找到 data-src，保留原始 src');
     }
   });
 
@@ -479,31 +431,79 @@ function createTreeNode(element, parentNode, level = 0) {
     span.textContent = getElementDescription(element);
     span.style.cursor = 'pointer';
     span.addEventListener('click', () => selectTreeNode(element, span));
+
+    // 检查是否直接包含动画元素
+    const hasAnimation = checkForDirectAnimation(element);
+    if (hasAnimation) {
+      const animationIcon = document.createElement('span');
+      animationIcon.textContent = '🎬'; // 使用电影摄像机 emoji 作为动画图标
+      animationIcon.title = '包含动画元素';
+      animationIcon.style.marginRight = '5px';
+      li.insertBefore(animationIcon, li.firstChild);
+    }
+
+    // 检查是否为图片元素或包含背景图片
+    const hasImage = checkForImage(element);
+    if (hasImage) {
+      const imageIcon = document.createElement('span');
+      imageIcon.textContent = '🖼️'; // 使用图片 emoji 作为图片图标
+      imageIcon.title = '包含图片';
+      imageIcon.style.marginRight = '5px';
+      li.insertBefore(imageIcon, li.firstChild);
+    }
+
     li.appendChild(span);
 
     if (element.children.length > 0) {
       const ul = document.createElement('ul');
       ul.style.display = 'none';  // 初始状态为折叠
-      ul.style.listStyleType = 'none'; // 移除默认的列表样式
-      ul.style.paddingLeft = '0'; // 移除默认的内边距
+      ul.style.listStyleType = 'none';
+      ul.style.paddingLeft = '0';
       Array.from(element.children).forEach(child => createTreeNode(child, ul, level + 1));
       li.appendChild(ul);
 
       const toggleBtn = document.createElement('span');
-      toggleBtn.textContent = '▶';  // 初始状态为折叠
-      toggleBtn.style.marginRight = '3px'; // 减小切换按钮的右边距
+      toggleBtn.textContent = '▶';
+      toggleBtn.style.marginRight = '3px';
       toggleBtn.style.cursor = 'pointer';
       toggleBtn.addEventListener('click', (e) => {
-        e.stopPropagation();  // 防止触发父元素的点击事件
+        e.stopPropagation();
         toggleTreeNode(toggleBtn, ul);
       });
-      li.insertBefore(toggleBtn, span);
+      li.insertBefore(toggleBtn, li.firstChild);
     }
 
     parentNode.appendChild(li);
   } catch (error) {
     console.error('Error creating tree node:', error);
   }
+}
+
+function checkForDirectAnimation(element) {
+  // 只检查直接子元素
+  for (let child of element.children) {
+    if (child.tagName.toLowerCase() === 'animatetransform' || 
+        child.tagName.toLowerCase() === 'animate') {
+      return true;
+    }
+  }
+  return false;
+}
+
+function checkForImage(element) {
+  // 检查是否为 img 标签或有 data-src 属性
+  if (element.tagName.toLowerCase() === 'img' || element.hasAttribute('data-src')) {
+    return true;
+  }
+
+  // 检查是否有背景图片或 data-lazy-bgimg 属性
+  const style = window.getComputedStyle(element);
+  const backgroundImage = style.getPropertyValue('background-image');
+  if (backgroundImage && backgroundImage !== 'none' || element.hasAttribute('data-lazy-bgimg')) {
+    return true;
+  }
+
+  return false;
 }
 
 function getElementDescription(element) {
@@ -540,11 +540,14 @@ function selectTreeNode(element, span) {
   span.style.backgroundColor = 'yellow';
   highlightElement(element);
   updateAttributesPanel(element);
+  //提取选中内容
+  extractSelectedElements();
 }
 
 function updateAttributesPanel(element) {
   const styleAttributes = document.querySelector('#style-attributes .attribute-content');
   const otherAttributes = document.querySelector('#other-attributes .attribute-content');
+  const animationAttributes = document.querySelector('#animation-attributes .attribute-content');
   const simplifyHtmlCheckbox = document.getElementById('simplify-html-checkbox');
 
   // 更新样式属性
@@ -600,6 +603,74 @@ function updateAttributesPanel(element) {
     }
   }
 
+  // 更新动画属性
+  const animationPanel = document.getElementById('animation-attributes');
+  const hasAnimation = checkForDirectAnimation(element);
+  
+  if (hasAnimation) {
+    animationPanel.style.display = 'block';
+    animationAttributes.innerHTML = '';
+    
+    const animationElements = Array.from(element.children).filter(child => 
+      child.tagName.toLowerCase() === 'animate' || child.tagName.toLowerCase() === 'animatetransform'
+    );
+
+    animationElements.forEach(animElement => {
+      const animType = animElement.tagName.toLowerCase();
+      const attributeName = animElement.getAttribute('attributeName');
+      const values = animElement.getAttribute('values');
+      const keyTimes = animElement.getAttribute('keyTimes');
+      const dur = animElement.getAttribute('dur');
+      const begin = animElement.getAttribute('begin');
+      const fill = animElement.getAttribute('fill');
+      const restart = animElement.getAttribute('restart');
+
+      let animationDescription = '';
+      if (values && keyTimes) {
+        const valueArray = values.split(';');
+        const keyTimeArray = keyTimes.split(';');
+        if (valueArray.length === keyTimeArray.length) {
+          animationDescription = valueArray.map((value, index) => {
+            const time = parseFloat(keyTimeArray[index]) * parseFloat(dur);
+            return `${value} 在 ${time.toFixed(2)}s`;
+          }).join(' → ');
+        }
+      }
+
+      animationAttributes.innerHTML += `
+        <div class="animation-item">
+          <h4>${animType === 'animate' ? '基础动画' : '变换动画'}</h4>
+          <span class="attribute-item">
+            <span class="attribute-name">属性名:</span>
+            <span class="attribute-value">${attributeName}</span>
+          </span>
+          <span class="attribute-item">
+            <span class="attribute-name">动画过程:</span>
+            <span class="attribute-value">${animationDescription}</span>
+          </span>
+          <span class="attribute-item">
+            <span class="attribute-name">持续时间:</span>
+            <span class="attribute-value">${dur}</span>
+          </span>
+          <span class="attribute-item highlight">
+            <span class="attribute-name">开始时间:</span>
+            <span class="attribute-value">${begin}</span>
+          </span>
+          <span class="attribute-item">
+            <span class="attribute-name">填充模式:</span>
+            <span class="attribute-value">${fill}</span>
+          </span>
+          <span class="attribute-item">
+            <span class="attribute-name">重启行为:</span>
+            <span class="attribute-value">${restart}</span>
+          </span>
+        </div>
+      `;
+    });
+  } else {
+    animationPanel.style.display = 'none';
+  }
+
   // 添加缩略图的鼠标悬停效果
   const thumbnails = document.querySelectorAll('.thumbnail');
   thumbnails.forEach(thumbnail => {
@@ -636,33 +707,16 @@ function saveContent() {
   
   if (!content) {
     console.error('没有内容可以保存');
-    alert('没有内容可以保存，请先提取文章内容。');
+    alert('没有内容可以保存，先提取文章内容。');
     return;
   }
 
   console.log('要保存的内长度:', content.length);
 
   const fullHTML = `
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>微信公众号文章内容</title>
-    <style>
-      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
-      img { max-width: 100%; height: auto; display: block; margin: 20px auto; }
-      h1, h2, h3 { color: #1a1a1a; }
-      a { color: #0066cc; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
     <div id="article-content">
     ${content}
     </div>
-</body>
-</html>
   `;
   
   const blob = new Blob([fullHTML], {type: 'text/html;charset=utf-8'});

@@ -2,20 +2,176 @@
   position: fixed;
   top: 20px;
   right: 20px;
-  width: 300px;
-  height: 400px;
-  background-color: white;
-  border: 1px solid #ccc;
+  width: 400px;
+  background-color: #2f3241;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  max-height: 900px;
+  border: 1px solid #4a4d5e;
   z-index: 9999;
   padding: 10px;
 }
 
-#content-area {
-  width: 100%;
-  height: 80%;
+#tree-view {
+  flex: 1;
+  height: 30vh;
+  overflow: auto;
+  border: 1px solid #4a4d5e;
+  margin-bottom: 5px;
+  padding: 10px;
+  background-color: #383c4a;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+}
+
+#attributes-panel {
+  height: 30vh;
+  overflow-y: auto;
+  background-color: #2f3241;
+  border: 1px solid #4a4d5e;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+#style-attributes, #other-attributes {
   margin-bottom: 10px;
+  background-color: #383c4a;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.attribute-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #5294e2;
+  border-bottom: 1px solid #5294e2;
+  padding-bottom: 3px;
+  font-size: 12px;
+}
+
+.attribute-content {
+  font-family: monospace;
+  word-break: break-all;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  font-size: 11px;
+}
+
+.attribute-item {
+  background-color: #2f3241;
+  padding: 1px 3px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.attribute-name {
+  color: #5294e2;
+  font-weight: bold;
+}
+
+.attribute-value {
+  color: #e6e6e6;
+}
+
+#content-area-container {
+  margin-top: 10px;
+  width: 100%;
+  height: 30vh;
+  border: 1px solid #4a4d5e;
+  display: flex;
+  justify-content: center;
+  align-items: center;  
+}
+
+#content-area {
+  width: 90%;
+  height: 28vh;
+  margin-bottom: 10px;
+  background-color: #4a4d5e;
+  color: #ffffff;
+  border: none;
+  margin-top: 10px;
+  font-family: monospace;
+  font-size: 10px;
+  padding: 10px;
+}
+
+.button-container {
+  display: flex;
+  justify-content:flex-end;
+  margin-top: 10px;
+}
+
+#simplify-html-label{
+  margin-right: 10px;
 }
 
 button {
+  background-color: #5294e2;
+  color: #ffffff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
   margin-right: 10px;
+}
+
+button:hover {
+  background-color: #3a76c3;
+}
+
+.thumbnail {
+  max-width: 50px;
+  max-height: 50px;
+  margin-left: 5px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.preview img {
+  max-width: 300px;
+  max-height: 300px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+#extract-btn{
+  display: none;
+  /* 提取全部内容按钮-隐藏 */
+}
+
+#extract-selected-btn{
+  display: none;
+  /* 提取选中内容按钮-隐藏 */
+}
+
+#animation-attributes {
+  margin-top: 10px;
+  background-color: #383c4a;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.animation-item {
+  margin-bottom: 10px;
+  padding: 5px;
+  background-color: #2f3241;
+  border-radius: 3px;
+}
+
+.animation-item h4 {
+  margin: 0 0 5px 0;
+  color: #5294e2;
+  font-size: 14px;
+}
+
+.highlight {
+  background-color: #4a4d5e;
+  padding: 2px 4px;
+  border-radius: 2px;
 }
