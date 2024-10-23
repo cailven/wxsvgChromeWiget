@@ -238,7 +238,7 @@ function analyzePage() {
   // 列出所有 id 包含 content 的元素
   const contentIds = Array.from(document.querySelectorAll('[id*="content"]'))
     .map(el => el.id);
-  analysis += `ID 包含 "content" 的元��: ${contentIds.join(', ')}\n`;
+  analysis += `ID 包含 "content" 的元: ${contentIds.join(', ')}\n`;
   
   // 列出所有 class 包含 content 的元素
   const contentClasses = Array.from(document.querySelectorAll('[class*="content"]'))
@@ -388,7 +388,7 @@ function simplifyHTML(html) {
 function formatHTML(html) {
   let formatted = '';
   let indent = 0;
-  const tab = '  '; // 使用两个空格作为缩进
+  const tab = '  '; // ���用两个空格作为缩���
   
   html.split(/>\s*</).forEach(element => {
     if (element.match(/^\/\w/)) {
@@ -446,7 +446,7 @@ function createTreeNode(element, parentNode, level = 0) {
     const hasImage = checkForImage(element);
     if (hasImage) {
       const imageIcon = document.createElement('span');
-      imageIcon.textContent = '🖼️'; // 使用图片 emoji 作为图片图标
+      imageIcon.textContent = '🖼️'; // 使用图�� emoji 作为图片图标
       imageIcon.title = '包含图片';
       imageIcon.style.marginRight = '5px';
       li.insertBefore(imageIcon, li.firstChild);
@@ -618,22 +618,29 @@ function updateAttributesPanel(element) {
     animationElements.forEach(animElement => {
       const animType = animElement.tagName.toLowerCase();
       const attributeName = animElement.getAttribute('attributeName');
+      const type = animElement.getAttribute('type'); // 新增：获取变换类型
       const values = animElement.getAttribute('values');
       const keyTimes = animElement.getAttribute('keyTimes');
       const dur = animElement.getAttribute('dur');
-      const begin = animElement.getAttribute('begin');
-      const fill = animElement.getAttribute('fill');
-      const restart = animElement.getAttribute('restart');
+      const begin = animElement.getAttribute('begin') || 'null';
+      const fill = animElement.getAttribute('fill') || 'null';
+      const restart = animElement.getAttribute('restart') || 'null';
+      const repeatCount = animElement.getAttribute('repeatCount') || 'null';
+      const calcMode = animElement.getAttribute('calcMode') || 'null';
+      const keySplines = animElement.getAttribute('keySplines') || 'null';
 
       let animationDescription = '';
-      if (values && keyTimes) {
+      if (values) {
         const valueArray = values.split(';');
-        const keyTimeArray = keyTimes.split(';');
-        if (valueArray.length === keyTimeArray.length) {
+        if (keyTimes) {
+          const keyTimeArray = keyTimes.split(';');
+          const durSeconds = parseFloat(dur);
           animationDescription = valueArray.map((value, index) => {
-            const time = parseFloat(keyTimeArray[index]) * parseFloat(dur);
+            const time = keyTimeArray[index] ? parseFloat(keyTimeArray[index]) * durSeconds : index * (durSeconds / (valueArray.length - 1));
             return `${value} 在 ${time.toFixed(2)}s`;
           }).join(' → ');
+        } else {
+          animationDescription = valueArray.join(' → ');
         }
       }
 
@@ -642,7 +649,7 @@ function updateAttributesPanel(element) {
           <h4>${animType === 'animate' ? '基础动画' : '变换动画'}</h4>
           <span class="attribute-item">
             <span class="attribute-name">属性名:</span>
-            <span class="attribute-value">${attributeName}</span>
+            <span class="attribute-value">${attributeName}${type ? ` (${type})` : ''}</span>
           </span>
           <span class="attribute-item">
             <span class="attribute-name">动画过程:</span>
@@ -652,7 +659,7 @@ function updateAttributesPanel(element) {
             <span class="attribute-name">持续时间:</span>
             <span class="attribute-value">${dur}</span>
           </span>
-          <span class="attribute-item highlight">
+          <span class="attribute-item">
             <span class="attribute-name">开始时间:</span>
             <span class="attribute-value">${begin}</span>
           </span>
@@ -664,6 +671,20 @@ function updateAttributesPanel(element) {
             <span class="attribute-name">重启行为:</span>
             <span class="attribute-value">${restart}</span>
           </span>
+          <span class="attribute-item">
+            <span class="attribute-name">重复次数:</span>
+            <span class="attribute-value">${repeatCount}</span>
+          </span>
+          <span class="attribute-item">
+            <span class="attribute-name">计算模式:</span>
+            <span class="attribute-value">${calcMode}</span>
+          </span>
+          ${keySplines !== 'null' ? `
+          <span class="attribute-item">
+            <span class="attribute-name">关键样条:</span>
+            <span class="attribute-value">${keySplines}</span>
+          </span>
+          ` : ''}
         </div>
       `;
     });
@@ -711,7 +732,15 @@ function saveContent() {
     return;
   }
 
-  console.log('要保存的内长度:', content.length);
+  console.log('要保存的内容长度:', content.length);
+
+  // 获取公众号名称
+  const nicknameElement = document.querySelector('#js_name');
+  const nickname = nicknameElement ? nicknameElement.textContent.trim() : '未知公众号';
+
+  // 获取文章标题
+  const titleElement = document.querySelector('title');
+  const title = titleElement ? titleElement.textContent.trim() : '未知标题';
 
   const fullHTML = `
     <div id="article-content">
@@ -724,7 +753,17 @@ function saveContent() {
   downloadLink.href = URL.createObjectURL(blob);
   
   const today = new Date();
-  const fileName = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}.html`;
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  
+  // 创建文件名
+  let fileName = `${nickname}_${title}_${dateStr}.html`;
+  // 移除文件名中的非法字符
+  fileName = fileName.replace(/[<>:"/\\|?*]/g, '_');
+  // 限制文件名长度
+  if (fileName.length > 255) {
+    fileName = fileName.substring(0, 251) + '.html';
+  }
+  
   downloadLink.download = fileName;
   
   document.body.appendChild(downloadLink);
