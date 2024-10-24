@@ -11,12 +11,18 @@ let currentHTML = ''; // 新增变量，用于存储当前显示的内容
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === "toggleEditor") {
-    if (!editorVisible) {
-      createEditor();
+    if (window.location.href.includes('/s/')) {
+      if (!editorVisible) {
+        createEditor();
+      } else {
+        removeEditor();
+      }
+      editorVisible = !editorVisible;
     } else {
-      removeEditor();
+      console.log('当前页面不是微信文章页面,无法启用编辑器');
+      // 可以选择向用户发送一个通知
+      chrome.runtime.sendMessage({action: "showNotification", message: "请在微信文章页面使用此功能"});
     }
-    editorVisible = !editorVisible;
   }
 });
 
@@ -388,7 +394,7 @@ function simplifyHTML(html) {
 function formatHTML(html) {
   let formatted = '';
   let indent = 0;
-  const tab = '  '; // ���用两个空格作为缩���
+  const tab = '  '; // 两个空格作为缩
   
   html.split(/>\s*</).forEach(element => {
     if (element.match(/^\/\w/)) {
@@ -446,7 +452,7 @@ function createTreeNode(element, parentNode, level = 0) {
     const hasImage = checkForImage(element);
     if (hasImage) {
       const imageIcon = document.createElement('span');
-      imageIcon.textContent = '🖼️'; // 使用图�� emoji 作为图片图标
+      imageIcon.textContent = '🖼️'; // 使用图 emoji 作为图片图标
       imageIcon.title = '包含图片';
       imageIcon.style.marginRight = '5px';
       li.insertBefore(imageIcon, li.firstChild);
@@ -787,5 +793,26 @@ function removeEditor() {
   document.removeEventListener('click', selectElement);
 }
 
-// 初始化
-createEditor();
+// 将初始化代码替换为以下内容:
+function initializeIfNeeded() {
+  if (window.location.href.includes('/s/')) {
+    console.log('URL 包含 "/s/", 正在初始化编辑器...');
+    // createEditor();
+  } else {
+    console.log('URL 不包含 "/s/", 不初始化编辑器');
+  }
+}
+
+// 在 DOMContentLoaded 事件中调用初始化函数
+document.addEventListener('DOMContentLoaded', initializeIfNeeded);
+
+// 监听 URL 变化
+let lastUrl = location.href; 
+new MutationObserver(() => {
+  const url = location.href;
+  if (url !== lastUrl) {
+    lastUrl = url;
+    initializeIfNeeded();
+  }
+}).observe(document, {subtree: true, childList: true});
+
